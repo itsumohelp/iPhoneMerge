@@ -1,0 +1,65 @@
+001: func greet(name: String) -> String {
+002:     return "Hello, \(name)!"
+003: }
+004:
+005: struct User {
+006:     let id: Int
+007:     let name: String
+008:     let email: String
+009:     let age: Int
+010:     let isActive: Bool
+011: }
+012:
+013: class UserRepository {
+014:     private var users: [User] = []
+015:
+016:     func add(_ user: User) {
+017:         users.append(user)
+018:     }
+019:
+020:     func find(by id: Int) -> User? {
+021:         return users.first { $0.id == id }
+022:     }
+023:
+024:     func all() -> [User] {
+025:         return users
+026:     }
+027:
+028:     func delete(id: Int) {
+029:         users.removeAll { $0.id == id }
+030:     }
+031: }
+032:
+033: enum NetworkError: Error {
+034:     case notFound
+035:     case unauthorized
+036:     case serverError(Int)
+037:     case timeout
+038: }
+039:
+040: func fetchUser(id: Int) async throws -> User {
+041:     guard id > 0 else { throw NetworkError.notFound }
+042:     try await Task.sleep(nanoseconds: 100_000_000)
+043:     return User(id: id, name: "Alice", email: "alice@example.com", age: 30, isActive: true)
+044: }
+045:
+046: struct ContentView: View {
+047:     @State private var users: [User] = []
+048:     @State private var isLoading = false
+049:
+050:     var body: some View {
+051:         List(users, id: \.id) { user in
+052:             VStack(alignment: .leading) {
+053:                 Text(user.name)
+054:                 Text(user.email).foregroundStyle(.secondary)
+055:             }
+056:         }
+057:         .task {
+058:             isLoading = true
+059:             if let user = try? await fetchUser(id: 1) {
+060:                 users.append(user)
+061:             }
+062:             isLoading = false
+063:         }
+064:     }
+065: }

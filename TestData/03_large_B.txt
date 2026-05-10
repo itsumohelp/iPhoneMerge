@@ -1,0 +1,78 @@
+001: func greet(name: String, greeting: String = "Hello") -> String {
+002:     return "\(greeting), \(name)!"
+003: }
+004:
+005: struct User: Identifiable {
+006:     let id: Int
+007:     let name: String
+008:     let email: String
+009:     let age: Int
+010:     let isActive: Bool
+011:     let createdAt: Date
+012: }
+013:
+014: class UserRepository {
+015:     private var users: [User] = []
+016:
+017:     func add(_ user: User) {
+018:         users.append(user)
+019:     }
+020:
+021:     func find(by id: Int) -> User? {
+022:         return users.first { $0.id == id }
+023:     }
+024:
+025:     func findActive() -> [User] {
+026:         return users.filter { $0.isActive }
+027:     }
+028:
+029:     func all() -> [User] {
+030:         return users
+031:     }
+032:
+033:     func delete(id: Int) {
+034:         users.removeAll { $0.id == id }
+035:     }
+036: }
+037:
+038: enum NetworkError: Error {
+039:     case notFound
+040:     case unauthorized
+041:     case forbidden
+042:     case serverError(Int)
+043:     case timeout
+044: }
+045:
+046: func fetchUser(id: Int) async throws -> User {
+047:     guard id > 0 else { throw NetworkError.notFound }
+048:     try await Task.sleep(nanoseconds: 100_000_000)
+049:     return User(id: id, name: "Alice", email: "alice@example.com", age: 30, isActive: true, createdAt: .now)
+050: }
+051:
+052: struct ContentView: View {
+053:     @State private var users: [User] = []
+054:     @State private var isLoading = false
+055:     @State private var errorMessage: String?
+056:
+057:     var body: some View {
+058:         List(users) { user in
+059:             VStack(alignment: .leading) {
+060:                 Text(user.name).font(.headline)
+061:                 Text(user.email).foregroundStyle(.secondary)
+062:             }
+063:         }
+064:         .overlay {
+065:             if isLoading { ProgressView() }
+066:         }
+067:         .task {
+068:             isLoading = true
+069:             do {
+070:                 let user = try await fetchUser(id: 1)
+071:                 users.append(user)
+072:             } catch {
+073:                 errorMessage = error.localizedDescription
+074:             }
+075:             isLoading = false
+076:         }
+077:     }
+078: }
